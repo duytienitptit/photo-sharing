@@ -1,4 +1,4 @@
-"use strict";
+
 
 /**
  * Model data for Project 4 - the photo sharing site.
@@ -246,7 +246,8 @@ const comment5 = {
   _id: "57231f1a30e4351f4e9f4bed",
   date_time: "2013-11-28 17:45:13",
   comment:
-    "Back from my trip. Did IQs just... drop sharply while I was " + "away?",
+    "Back from my trip. Did IQs just... drop sharply while I was " +
+    "away?",
   user: er,
   photo_id: photo5._id,
 };
@@ -275,7 +276,8 @@ const comment8 = {
   _id: "57231f1a30e4351f4e9f4bf0",
   date_time: "2010-09-06 13:59:33",
   comment:
-    "Made a new friend today! Well, they followed me " + "home, anyway.",
+    "Made a new friend today! Well, they followed me " +
+    "home, anyway.",
   user: rk,
   photo_id: photo8._id,
 };
@@ -294,7 +296,8 @@ const comment9 = {
 const comment10 = {
   _id: "57231f1a30e4351f4e9f4bf2",
   date_time: "2013-12-04 13:12:00",
-  comment: "What do you mean you haven't heard of second " + "breakfast?",
+  comment: "What do you mean you haven't heard of second " +
+  "breakfast?",
   user: pt,
   photo_id: photo10._id,
 };

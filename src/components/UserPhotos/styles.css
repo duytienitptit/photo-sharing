@@ -1,0 +1,53 @@
+.user-photos-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.user-photos-table .photo-row {
+  border-bottom: 1px solid #ddd;
+}
+
+.user-photos-table .photo-row:last-child {
+  border-bottom: none;
+}
+
+.user-photos-table td {
+  padding: 12px 15px;
+  text-align: left;
+  vertical-align: middle;
+  color: #333;
+}
+
+.user-photos-table .photo-date-time,
+.user-photos-table .photo-file-name {
+  min-width: 150px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.user-photos-table .photo-image {
+  max-width: 150px;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Styling for the cell containing the image if needed */
+.user-photos-table .photo-cell-image {
+  width: 160px; /* Example: Fixed width for image cell */
+}
+
+
+.user-photos-table .photo-row:hover {
+  background-color: #f5f5f5;
+  cursor: pointer;
+}
+
+/* Optional: Add some spacing if file name is long */
+.user-photos-table .photo-file-name {
+  word-break: break-word; /* Break long file names */
+}

@@ -1,6 +1,4 @@
 import React from "react";
-import { Typography } from "@mui/material";
-
 import "./styles.css";
 import {useParams} from "react-router-dom";
 import models from "../../modelData/models";
@@ -9,18 +7,27 @@ import models from "../../modelData/models";
  * Define UserPhotos, a React component of Project 4.
  */
 function UserPhotos () {
-    const user = useParams();
-    const photoModel = models.photoOfUserModel(user.userId);
+    const params = useParams();
+    const photoModel = models.photoOfUserModel(params.userId);
+
     return (
-      <Typography variant="body1">
-        <table>
-            <tr>
-                <td>{photoModel.date_time}</td>
-                <td>{photoModel.file_name}</td>
-                <td><img src={`/images/${photoModel.file_name}`} alt={photoModel.file_name} /></td>
+        <table className="user-photos-table">
+        <tbody>
+          {photoModel.map((photo) => (
+            <tr key={photo._id} className="photo-row">
+              <td className="photo-date-time">{photo.date_time}</td>
+              <td className="photo-file-name">{photo.file_name}</td>
+              <td className="photo-cell-image">
+                <img
+                  className="photo-image"
+                  src={`/images/${photo.file_name}`}
+                  alt={photo.file_name}
+                />
+              </td>
             </tr>
-        </table>
-      </Typography>
+          ))}
+        </tbody>
+      </table>
     );
 }
 
