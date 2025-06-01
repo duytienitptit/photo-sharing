@@ -122,7 +122,7 @@ function UserComments() {
                   {comment.photo.owner && (
                     <Box sx={{ marginTop: 1 }}>
                       <Chip
-                        label={`Photo by ${comment.photo.owner.first} ${comment.photo.owner.last_name}`}
+                        label={`Photo by ${comment.photo.owner.first_name} ${comment.photo.owner.last_name}`}
                         size='small'
                         component={Link}
                         to={`/users/${comment.photo.owner._id}`}

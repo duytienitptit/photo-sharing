@@ -11,7 +11,7 @@ const versionString = '1.0'
 
 async function dbLoad() {
   try {
-    await mongoose.connect(process.env.DB_URL)
+    await mongoose.connect(process.env.MONGO_URL)
     console.log('Successfully connected to MongoDB Atlas!')
   } catch (error) {
     console.log('Unable connecting to MongoDB Atlas!')
