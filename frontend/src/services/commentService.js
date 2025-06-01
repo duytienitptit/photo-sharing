@@ -1,14 +1,11 @@
-import API_URL from '../config/api'
+import axios from 'axios'
 
 const commentService = {
   // Get all comments by a specific user
   async getCommentsOfUser(userId) {
     try {
-      const response = await fetch(`${API_URL}/comments/commentsOfUser/${userId}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch user comments')
-      }
-      return await response.json()
+      const response = await axios.get(`/comments/commentsOfUser/${userId}`)
+      return response.data
     } catch (error) {
       console.error('Error fetching user comments:', error)
       throw error
@@ -18,20 +15,11 @@ const commentService = {
   // Add comment to a photo
   async addCommentToPhoto(photoId, comment, userId) {
     try {
-      const response = await fetch(`${API_URL}/comments/commentsOfPhoto/${photoId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          comment: comment,
-          user_id: userId
-        })
+      const response = await axios.post(`/comments/commentsOfPhoto/${photoId}`, {
+        comment: comment,
+        user_id: userId
       })
-      if (!response.ok) {
-        throw new Error('Failed to add comment')
-      }
-      return await response.json()
+      return response.data
     } catch (error) {
       console.error('Error adding comment:', error)
       throw error

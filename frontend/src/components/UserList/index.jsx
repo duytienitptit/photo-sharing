@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Divider, List, ListItem, ListItemText, Typography, CircularProgress, Alert } from '@mui/material'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 
 import './styles.css'
 import userService from '../../services/userService'
@@ -12,8 +13,14 @@ function UserList() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { isAuthenticated } = useAuth()
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setLoading(false)
+      return
+    }
+
     const fetchUsers = async () => {
       try {
         setLoading(true)
@@ -29,7 +36,11 @@ function UserList() {
     }
 
     fetchUsers()
-  }, [])
+  }, [isAuthenticated])
+
+  if (!isAuthenticated) {
+    return null // Don't show user list when not authenticated
+  }
 
   if (loading) {
     return (
