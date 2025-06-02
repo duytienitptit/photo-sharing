@@ -99,7 +99,7 @@ function UserPhotos() {
                 <CardMedia
                   component='img'
                   height='300'
-                  image={`${API_URL}/images/${photo.file_name}`}
+                  image={`/images/${photo.file_name}`}
                   alt={`Photo by ${user?.first} ${user?.last_name}`}
                   sx={{ objectFit: 'cover' }}
                 />

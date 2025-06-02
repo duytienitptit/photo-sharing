@@ -85,7 +85,7 @@ function PhotoDetail() {
         {photo.file_name && (
           <CardMedia
             component='img'
-            image={`${API_URL}/images/${photo.file_name}`}
+            image={`/images/${photo.file_name}`}
             alt='Photo'
             className='photo-image'
             sx={{ maxHeight: 600, objectFit: 'contain' }}

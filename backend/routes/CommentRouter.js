@@ -1,6 +1,7 @@
 const express = require('express')
 const Photo = require('../db/photoModel')
 const User = require('../db/userModel')
+const Comment = require('../db/commentModel')
 const { authenticateToken } = require('../middleware/auth')
 const router = express.Router()
 
@@ -9,47 +10,48 @@ router.get('/commentsOfUser/:userId', async (request, response) => {
   try {
     const userId = request.params.userId
 
-    // Find all photos that contain comments from this user
-    const photos = await Photo.find({
-      'comments.user_id': userId
-    }).select('_id file_name date_time user_id comments')
+    // Find all comments from this user
+    const comments = await Comment.find({ user_id: userId })
+      .sort({ date_time: -1 }) // Sort by date (newest first)
+      .lean()
 
-    // Extract all comments from this user with photo info
+    // Create an array to store the processed comments
     const userComments = []
 
-    for (const photo of photos) {
-      // Manually fetch photo owner info
-      let photoOwner = null
-      if (photo.user_id) {
-        photoOwner = await User.findById(photo.user_id).select('_id first_name last_name')
+    // Process each comment to include photo info
+    for (const comment of comments) {
+      // Get photo information
+      const photo = await Photo.findById(comment.photo_id).lean()
+
+      if (!photo) {
+        continue // Skip if photo not found
       }
 
-      photo.comments.forEach(comment => {
-        // Check if this comment belongs to the requested user
-        if (comment.user_id && comment.user_id.toString() === userId) {
-          userComments.push({
-            _id: comment._id,
-            comment: comment.comment,
-            date_time: comment.date_time,
-            photo: {
-              _id: photo._id,
-              file_name: photo.file_name,
-              date_time: photo.date_time,
-              owner: photoOwner
-                ? {
-                    _id: photoOwner._id,
-                    first_name: photoOwner.first_name,
-                    last_name: photoOwner.last_name
-                  }
-                : null
-            }
-          })
+      // Get photo owner information
+      let photoOwner = null
+      if (photo.user_id) {
+        photoOwner = await User.findById(photo.user_id).select('_id first_name last_name').lean()
+      }
+
+      // Add processed comment to results
+      userComments.push({
+        _id: comment._id,
+        comment: comment.comment,
+        date_time: comment.date_time,
+        photo: {
+          _id: photo._id,
+          file_name: photo.file_name,
+          date_time: photo.date_time,
+          owner: photoOwner
+            ? {
+                _id: photoOwner._id,
+                first_name: photoOwner.first_name,
+                last_name: photoOwner.last_name
+              }
+            : null
         }
       })
     }
-
-    // Sort comments by date (newest first)
-    userComments.sort((a, b) => new Date(b.date_time) - new Date(a.date_time))
 
     response.status(200).json(userComments)
   } catch (error) {
@@ -75,31 +77,68 @@ router.post('/commentsOfPhoto/:photoId', authenticateToken, async (request, resp
     // Get user_id from authenticated user
     const user_id = request.user.id
 
+    // Check if the photo exists
     const photo = await Photo.findById(photoId)
     if (!photo) {
       return response.status(404).json({ error: 'Photo not found' })
     }
 
-    // Add new comment
-    photo.comments.push({
+    // Create new comment
+    const newComment = new Comment({
       comment: comment.trim(),
       user_id: user_id,
-      date_time: new Date(Date.now())
+      photo_id: photoId,
+      date_time: new Date()
     })
 
-    await photo.save()
+    // Save the comment
+    await newComment.save()
 
-    // Return the updated photo with populated comments
-    const updatedPhoto = await Photo.findById(photoId)
-      .populate({
-        path: 'comments.user_id',
-        select: '_id first_name last_name'
-      })
-      .select('_id file_name date_time user_id comments')
+    // Get all comments for this photo with user info
+    const comments = await Comment.find({ photo_id: photoId })
+      .populate('user_id', '_id first_name last_name')
+      .sort({ date_time: 1 }) // Sort by date (oldest first)
+      .lean()
 
-    response.status(201).json(updatedPhoto)
+    // Return the photo with its comments
+    const photoWithComments = {
+      _id: photo._id,
+      file_name: photo.file_name,
+      date_time: photo.date_time,
+      user_id: photo.user_id,
+      comments: comments
+    }
+
+    response.status(201).json(photoWithComments)
   } catch (error) {
     console.error('Error adding comment:', error)
+    if (error.name === 'CastError') {
+      return response.status(400).json({ error: 'Invalid photo ID format' })
+    }
+    response.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get all comments for a specific photo
+router.get('/commentsOfPhoto/:photoId', async (request, response) => {
+  try {
+    const photoId = request.params.photoId
+
+    // Check if the photo exists
+    const photo = await Photo.findById(photoId)
+    if (!photo) {
+      return response.status(404).json({ error: 'Photo not found' })
+    }
+
+    // Get all comments for this photo with user info
+    const comments = await Comment.find({ photo_id: photoId })
+      .populate('user_id', '_id first_name last_name')
+      .sort({ date_time: 1 }) // Sort by date (oldest first)
+      .lean()
+
+    response.status(200).json(comments)
+  } catch (error) {
+    console.error('Error fetching photo comments:', error)
     if (error.name === 'CastError') {
       return response.status(400).json({ error: 'Invalid photo ID format' })
     }

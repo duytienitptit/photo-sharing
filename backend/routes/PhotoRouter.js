@@ -1,5 +1,6 @@
 const express = require('express')
 const Photo = require('../db/photoModel')
+const Comment = require('../db/commentModel')
 const { authenticateToken } = require('../middleware/auth')
 const multer = require('multer')
 const path = require('path')
@@ -105,12 +106,10 @@ router.post('/', async (request, response) => {
     if (!file_name || !user_id) {
       return response.status(400).json({ error: 'Missing required fields: file_name and user_id' })
     }
-
     const newPhoto = new Photo({
       file_name,
       user_id,
-      date_time: new Date(),
-      comments: []
+      date_time: new Date()
     })
 
     const savedPhoto = await newPhoto.save()
@@ -126,41 +125,37 @@ router.get('/:id', async (request, response) => {
   try {
     const photoId = request.params.id
 
-    const photo = await Photo.findById(photoId)
-      .populate({
-        path: 'comments.user_id',
-        select: '_id first last_name'
-      })
-      .populate({
-        path: 'user_id',
-        select: '_id first last_name'
-      })
-      .select('_id file_name date_time user_id comments')
+    // Get the photo
+    const photo = await Photo.findById(photoId).populate('user_id', '_id first_name last_name').lean()
 
     if (!photo) {
       return response.status(404).json({ error: 'Photo not found' })
     }
 
-    // Transform the data to include full user info in comments
-    const photoObj = photo.toObject()
+    // Get comments for this photo
+    const comments = await Comment.find({ photo_id: photoId })
+      .populate('user_id', '_id first_name last_name')
+      .sort({ date_time: 1 }) // Sort by date (oldest first)
+      .lean()
 
-    // Transform comments to include user info
-    if (photoObj.comments && photoObj.comments.length > 0) {
-      photoObj.comments = photoObj.comments.map(comment => ({
+    // Add comments to the photo object
+    const photoWithComments = {
+      ...photo,
+      comments: comments.map(comment => ({
         _id: comment._id,
         comment: comment.comment,
         date_time: comment.date_time,
         user: comment.user_id
           ? {
               _id: comment.user_id._id,
-              first: comment.user_id.first,
+              first_name: comment.user_id.first_name,
               last_name: comment.user_id.last_name
             }
           : null
       }))
     }
 
-    response.status(200).json(photoObj)
+    response.status(200).json(photoWithComments)
   } catch (error) {
     console.error('Error fetching photo:', error)
     if (error.name === 'CastError') {
@@ -176,37 +171,40 @@ router.get('/photosOfUser/:id', async (request, response) => {
     const userId = request.params.id
 
     // Find all photos belonging to the user
-    // Populate user information for each comment
     const photos = await Photo.find({ user_id: userId })
-      .populate({
-        path: 'comments.user_id',
-        select: '_id first last_name'
-      })
-      .select('_id file_name date_time user_id comments')
       .sort({ date_time: -1 }) // Sort by newest first
+      .lean()
 
-    // Transform the data to include full user info in comments
-    const photosWithComments = photos.map(photo => {
-      const photoObj = photo.toObject()
+    // Get comments for each photo
+    const photosWithComments = []
 
-      // Transform comments to include user info
-      if (photoObj.comments && photoObj.comments.length > 0) {
-        photoObj.comments = photoObj.comments.map(comment => ({
-          _id: comment._id,
-          comment: comment.comment,
-          date_time: comment.date_time,
-          user: comment.user_id
-            ? {
-                _id: comment.user_id._id,
-                first: comment.user_id.first,
-                last_name: comment.user_id.last_name
-              }
-            : null
-        }))
-      }
+    for (const photo of photos) {
+      // Get comments for this photo
+      const comments = await Comment.find({ photo_id: photo._id })
+        .populate('user_id', '_id first_name last_name')
+        .sort({ date_time: 1 }) // Sort comments by date (oldest first)
+        .lean()
 
-      return photoObj
-    })
+      // Format comments
+      const formattedComments = comments.map(comment => ({
+        _id: comment._id,
+        comment: comment.comment,
+        date_time: comment.date_time,
+        user: comment.user_id
+          ? {
+              _id: comment.user_id._id,
+              first_name: comment.user_id.first_name,
+              last_name: comment.user_id.last_name
+            }
+          : null
+      }))
+
+      // Add photo with its comments to the results
+      photosWithComments.push({
+        ...photo,
+        comments: formattedComments
+      })
+    }
 
     response.status(200).json(photosWithComments)
   } catch (error) {
