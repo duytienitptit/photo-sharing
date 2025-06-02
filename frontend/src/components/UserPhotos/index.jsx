@@ -19,6 +19,7 @@ import { useParams, Link } from 'react-router-dom'
 import './styles.css'
 import photoService from '../../services/photoService'
 import userService from '../../services/userService'
+import API_URL from '../../config/api'
 
 /**
  * Define UserPhotos, a React component of Project 4.
@@ -93,16 +94,16 @@ function UserPhotos() {
         {photos.map(photo => (
           <Grid item xs={12} md={6} lg={4} key={photo._id}>
             <Card elevation={3}>
+              {' '}
               {photo.file_name && (
                 <CardMedia
                   component='img'
                   height='300'
-                  image={`/images/${photo.file_name}`}
+                  image={`${API_URL}/images/${photo.file_name}`}
                   alt={`Photo by ${user?.first} ${user?.last_name}`}
                   sx={{ objectFit: 'cover' }}
                 />
               )}
-
               <CardContent>
                 <Typography variant='body2' color='text.secondary' gutterBottom>
                   {new Date(photo.date_time).toLocaleString()}

@@ -1,6 +1,7 @@
 const express = require('express')
 const Photo = require('../db/photoModel')
 const User = require('../db/userModel')
+const { authenticateToken } = require('../middleware/auth')
 const router = express.Router()
 
 // Get all comments by a specific user
@@ -61,14 +62,18 @@ router.get('/commentsOfUser/:userId', async (request, response) => {
 })
 
 // Add comment to a photo
-router.post('/commentsOfPhoto/:photoId', async (request, response) => {
+router.post('/commentsOfPhoto/:photoId', authenticateToken, async (request, response) => {
   try {
     const photoId = request.params.photoId
-    const { comment, user_id } = request.body
+    const { comment } = request.body
 
-    if (!comment || !user_id) {
-      return response.status(400).json({ error: 'Comment and user_id are required' })
+    // Validate comment content
+    if (!comment || comment.trim() === '') {
+      return response.status(400).json({ error: 'Comment cannot be empty' })
     }
+
+    // Get user_id from authenticated user
+    const user_id = request.user.id
 
     const photo = await Photo.findById(photoId)
     if (!photo) {
@@ -77,9 +82,9 @@ router.post('/commentsOfPhoto/:photoId', async (request, response) => {
 
     // Add new comment
     photo.comments.push({
-      comment: comment,
+      comment: comment.trim(),
       user_id: user_id,
-      date_time: new Date()
+      date_time: new Date(Date.now())
     })
 
     await photo.save()
@@ -88,7 +93,7 @@ router.post('/commentsOfPhoto/:photoId', async (request, response) => {
     const updatedPhoto = await Photo.findById(photoId)
       .populate({
         path: 'comments.user_id',
-        select: '_id first last_name'
+        select: '_id first_name last_name'
       })
       .select('_id file_name date_time user_id comments')
 

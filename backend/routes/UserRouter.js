@@ -3,22 +3,80 @@ const User = require('../db/userModel')
 const { authenticateToken, generateToken } = require('../middleware/auth')
 const router = express.Router()
 
-// Login endpoint - NO authentication required
-router.post('/admin/login', async (request, response) => {
+// Registration endpoint - NO authentication required
+router.post('/user', async (request, response) => {
   try {
-    const { login_name } = request.body
+    const { login_name, password, first_name, last_name, location, description, occupation } = request.body
 
+    // Validate required fields
     if (!login_name) {
       return response.status(400).json({ error: 'Login name is required' })
     }
+    if (!password) {
+      return response.status(400).json({ error: 'Password is required' })
+    }
+    if (!first_name) {
+      return response.status(400).json({ error: 'First name is required' })
+    }
+    if (!last_name) {
+      return response.status(400).json({ error: 'Last name is required' })
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ login_name })
+    if (existingUser) {
+      return response.status(400).json({ error: 'User with this login name already exists' })
+    }
+
+    // Create new user
+    const newUser = new User({
+      login_name,
+      password,
+      first_name,
+      last_name,
+      location,
+      description,
+      occupation
+    })
+
+    // Save user
+    await newUser.save()
+
+    // Return success without sensitive information
+    response.status(201).json({
+      user: {
+        _id: newUser._id,
+        login_name: newUser.login_name,
+        first_name: newUser.first_name,
+        last_name: newUser.last_name
+      }
+    })
+  } catch (error) {
+    console.error('Error during registration:', error)
+    response.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Login endpoint - NO authentication required
+router.post('/admin/login', async (request, response) => {
+  try {
+    const { login_name, password } = request.body
+
+    if (!login_name || !password) {
+      return response.status(400).json({ error: 'Login name and password are required' })
+    }
 
     // Find user by login_name
-    const user = await User.findOne({ login_name }).select(
-      '_id first_name last_name location description occupation login_name'
-    )
+    const user = await User.findOne({ login_name })
 
     if (!user) {
-      return response.status(400).json({ error: 'Invalid login name' })
+      return response.status(400).json({ error: 'Invalid login credentials' })
+    }
+
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password)
+    if (!isPasswordValid) {
+      return response.status(400).json({ error: 'Invalid login credentials' })
     }
 
     // Generate JWT token

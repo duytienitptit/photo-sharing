@@ -16,21 +16,41 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    // Check if user is already logged in on app start
+  // Function to check and refresh auth state from localStorage
+  const refreshAuthState = () => {
+    console.log('Refreshing auth state...')
     const currentUser = authService.getCurrentUser()
     const token = authService.getToken()
+
+    console.log('Current auth state:', { currentUser, token })
 
     if (currentUser && token) {
       setUser(currentUser)
       setIsAuthenticated(true)
+    } else {
+      setUser(null)
+      setIsAuthenticated(false)
     }
+  }
 
+  useEffect(() => {
+    // Check if user is already logged in on app start
+    refreshAuthState()
     setLoading(false)
-  }, [])
 
-  const login = async loginName => {
-    const result = await authService.login(loginName)
+    // Add event listener for storage changes to handle login/logout in other tabs
+    window.addEventListener('storage', event => {
+      if (event.key === 'token' || event.key === 'user') {
+        refreshAuthState()
+      }
+    })
+
+    return () => {
+      window.removeEventListener('storage', () => {})
+    }
+  }, [])
+  const login = async (loginName, password) => {
+    const result = await authService.login(loginName, password)
 
     if (result.success) {
       setUser(result.user)
@@ -40,18 +60,23 @@ export const AuthProvider = ({ children }) => {
     return result
   }
 
+  const register = async userData => {
+    return await authService.register(userData)
+  }
+
   const logout = async () => {
     await authService.logout()
     setUser(null)
     setIsAuthenticated(false)
   }
-
   const value = {
     user,
     isAuthenticated,
     loading,
     login,
-    logout
+    logout,
+    register,
+    refreshAuthState
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

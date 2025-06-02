@@ -1,10 +1,16 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { CircularProgress, Box } from '@mui/material'
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, refreshAuthState } = useAuth()
+
+  // Refresh auth state when component mounts
+  useEffect(() => {
+    refreshAuthState()
+    console.log('ProtectedRoute - Auth State:', { isAuthenticated, loading })
+  }, [refreshAuthState, isAuthenticated, loading])
 
   if (loading) {
     return (

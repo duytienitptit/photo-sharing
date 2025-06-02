@@ -34,10 +34,11 @@ axios.interceptors.response.use(
 )
 
 class AuthService {
-  async login(loginName) {
+  async login(loginName, password) {
     try {
       const response = await axios.post('users/admin/login', {
-        login_name: loginName
+        login_name: loginName,
+        password: password
       })
 
       const { user, token } = response.data
@@ -46,8 +47,13 @@ class AuthService {
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
 
+      // Set token in axios default headers
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+
+      console.log('Login successful:', { user, token: token.substring(0, 10) + '...' })
       return { success: true, user, token }
     } catch (error) {
+      console.error('Login error:', error)
       const errorMessage = error.response?.data?.error || 'Login failed'
       return { success: false, error: errorMessage }
     }
@@ -62,6 +68,8 @@ class AuthService {
       // Always clear local storage regardless of API response
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      // Remove token from axios headers
+      delete axios.defaults.headers.common['Authorization']
     }
   }
 
@@ -79,9 +87,20 @@ class AuthService {
   getToken() {
     return localStorage.getItem('token')
   }
-
   isAuthenticated() {
-    return !!this.getToken()
+    const token = this.getToken()
+    console.log('Checking authentication:', !!token)
+    return !!token
+  }
+  async register(userData) {
+    try {
+      const response = await axios.post('users/user', userData)
+      return { success: true, data: response.data }
+    } catch (error) {
+      console.error('Registration error:', error)
+      const errorMessage = error.response?.data?.error || 'Registration failed'
+      return { success: false, error: errorMessage }
+    }
   }
 }
 

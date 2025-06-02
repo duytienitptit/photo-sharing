@@ -1,10 +1,22 @@
 import axios from 'axios'
+import API_URL from '../config/api'
+import authService from './authService'
+
+// Ensure the base URL is set
+axios.defaults.baseURL = API_URL
 
 const photoService = {
   // Get photo by ID
   async getPhotoById(photoId) {
     try {
-      const response = await axios.get(`/photos/${photoId}`)
+      console.log(`Fetching photo with ID: ${photoId}`)
+
+      // Ensure token is included in the request if user is authenticated
+      const token = authService.getToken()
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+
+      const response = await axios.get(`/photos/${photoId}`, config)
+      console.log('Photo data received:', response.data)
       return response.data
     } catch (error) {
       console.error('Error fetching photo:', error)
@@ -15,7 +27,11 @@ const photoService = {
   // Get all photos of a specific user
   async getPhotosOfUser(userId) {
     try {
-      const response = await axios.get(`/photos/photosOfUser/${userId}`)
+      // Ensure token is included in the request if user is authenticated
+      const token = authService.getToken()
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+
+      const response = await axios.get(`/photos/photosOfUser/${userId}`, config)
       return response.data
     } catch (error) {
       console.error('Error fetching photos:', error)
@@ -26,7 +42,11 @@ const photoService = {
   // Get all photos
   async getAllPhotos() {
     try {
-      const response = await axios.get('/photos')
+      // Ensure token is included in the request if user is authenticated
+      const token = authService.getToken()
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+
+      const response = await axios.get('/photos', config)
       return response.data
     } catch (error) {
       console.error('Error fetching all photos:', error)
@@ -37,10 +57,47 @@ const photoService = {
   // Create new photo
   async createPhoto(photoData) {
     try {
-      const response = await axios.post('/photos', photoData)
+      // Ensure token is included in the request
+      const token = authService.getToken()
+
+      if (!token) {
+        throw new Error('Authentication required to create a photo')
+      }
+
+      const config = { headers: { Authorization: `Bearer ${token}` } }
+      const response = await axios.post('/photos', photoData, config)
       return response.data
     } catch (error) {
       console.error('Error creating photo:', error)
+      throw error
+    }
+  },
+
+  // Upload a photo
+  async uploadPhoto(userId, file) {
+    try {
+      // Ensure token is included in the request
+      const token = authService.getToken()
+
+      if (!token) {
+        throw new Error('Authentication required to upload a photo')
+      }
+
+      const formData = new FormData()
+      formData.append('photo', file)
+      formData.append('user_id', userId)
+
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+
+      const response = await axios.post('/photos/upload', formData, config)
+      return response.data
+    } catch (error) {
+      console.error('Error uploading photo:', error)
       throw error
     }
   }

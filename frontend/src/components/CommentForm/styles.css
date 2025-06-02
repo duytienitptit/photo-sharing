@@ -1,0 +1,49 @@
+/* CommentForm Component Styles */
+.comment-form-container {
+  padding: 20px;
+  margin-top: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  margin-top: 16px;
+}
+
+.comment-input {
+  margin-bottom: 16px;
+}
+
+.comment-submit-button {
+  align-self: flex-end;
+  min-width: 120px;
+  height: 40px;
+}
+
+.comment-alert {
+  margin-bottom: 16px;
+}
+
+.login-prompt {
+  padding: 24px;
+  margin-top: 16px;
+  text-align: center;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+}
+
+/* Animation for new comments */
+@keyframes highlight {
+  0% {
+    background-color: rgba(66, 165, 245, 0.2);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.new-comment {
+  animation: highlight 2s ease-in-out;
+}
