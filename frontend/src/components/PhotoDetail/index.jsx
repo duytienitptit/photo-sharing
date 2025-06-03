@@ -18,7 +18,6 @@ import { useParams, Link } from 'react-router-dom'
 import './styles.css'
 import photoService from '../../services/photoService'
 import CommentForm from '../CommentForm'
-import API_URL from '../../config/api'
 
 /**
  * PhotoDetail component - displays a single photo with its comments

@@ -19,7 +19,6 @@ import { useParams, Link } from 'react-router-dom'
 import './styles.css'
 import photoService from '../../services/photoService'
 import userService from '../../services/userService'
-import API_URL from '../../config/api'
 
 /**
  * Define UserPhotos, a React component of Project 4.
